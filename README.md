@@ -26,9 +26,13 @@ source = $HOME/.config/hypr/displays.conf
 ## CLI Commands
 The tool comes with an integrated cli which can be accessed by running hyprandr -cmd.
 
-The commands for it are the following.
- list used to list all avaliable resolutions
- monitor, used to specify the monitor to be affected
- refresh, used to refresh the list of avaliable resolutions for change-res
- change-res, used to select a resolution from the list of resolutions
- set-res, used to manually specify a resolution to change to in the format "1920x1080@60"
+The commands for it are the following:
+> **-list**, used to list all avaliable resolutions
+
+> **-monitor**, used to specify the monitor to be affected
+
+> **-refresh**, used to refresh the list of avaliable resolutions for change-res
+
+> **-change-res**, used to select a resolution from the list of resolutions
+
+> **-set-res**, used to manually specify a resolution to change to in the format "1920x1080@60"
