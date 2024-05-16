@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -21,6 +22,16 @@ func main() {
 	flag.IntVar(&selection, "change-res", -1, "select the cooresponding resolution")
 	flag.StringVar(&monitorName, "monitor", "none", "used to select the monitor to change")
 	flag.StringVar(&customRes, "set-res", "none", "used to set the current resolution")
+
+	flag.BoolFunc(
+		"list",
+		"Used to list all current resolutions",
+		func(s string) error {
+			printResolutions(currentMonitors)
+			return nil
+		},
+	)
+
 	flag.BoolFunc(
 		"refresh",
 		"Used to refresh the list of resolutions",
@@ -32,11 +43,11 @@ func main() {
 	)
 	flag.Parse()
 
-	if !cmdMode {
+	if !cmdMode && len(os.Args[1:]) == 0 {
 		tea.NewProgram(
 			monitorSelectPage{}.New(currentMonitors), tea.WithAltScreen(),
 		).Run()
-        return
+		return
 	}
 
 	if monitorName == "none" {
