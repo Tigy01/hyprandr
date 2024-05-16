@@ -1,4 +1,4 @@
-module hyprandrtui
+module hyprandr
 
 require github.com/charmbracelet/bubbletea v0.25.0
 
