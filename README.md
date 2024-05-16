@@ -25,7 +25,7 @@ following line.
 ```
 source = $HOME/.config/hypr/displays.conf
 ```
-##Use
+## Use
 
 Move up and down with k and j. 
 
