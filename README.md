@@ -5,13 +5,13 @@ An easy to use TUI for managing your monitors' resolutions in Hyprland
 To install, clone the repo using git and build it with go. 
 
 ```
-go build && go install
+go mod tidy && go get && go build && go install
 ```
 
 You may need to run go get and/or go mod tidy before building.
 
 ## Setup
-Upon running the program once a default display.conf file will be generated
+Upon running the program once, a default display.conf file will be generated
 in the ~/.config/hypr/ directory. 
 
 Remove any lines declaring monitors from your hyprland.conf file OR override 
