@@ -2,20 +2,29 @@ package main
 
 import (
 	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type resolutionSelectPage struct {
+	cursor      int
+	subcursor   int
+	resolution  string
+	refreshRate int
+
 	name        string
-	monitors    map[string]*monitor
 	resolutions []string
-	selection   int
+
+	monitor  *monitor
+	monitors map[string]*monitor
 }
 
 func (p resolutionSelectPage) New(name string, monitors map[string]*monitor) resolutionSelectPage {
 	resolutions := monitors[name].resolutions
 	return resolutionSelectPage{
 		name:        name,
+		monitor:     monitors[name],
 		resolutions: resolutions,
 		monitors:    monitors,
 	}
@@ -27,21 +36,52 @@ func (m resolutionSelectPage) Init() tea.Cmd {
 
 func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		windowWidth = msg.Width
+		windowHeight = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "k":
-			m.selection = max(m.selection-1, 0)
-		case "j":
-			m.selection = min(m.selection+1, len(m.resolutions))
-		case "q":
-			return monitorSelectPage{}.New(m.monitors), nil
-		case "enter":
-			if m.selection == len(m.resolutions) {
-				m.monitors = getResolutions(m.monitors)
-				rewriteConfig(m.monitors)
-                return m.New(m.name,m.monitors), nil
+		case "h":
+			if m.resolution != "" {
+				m.subcursor = max(m.subcursor-1, 0)
 			}
-			changeRes(m.monitors, m.name, m.selection)
+		case "j":
+			if m.resolution == "" {
+				m.cursor = min(m.cursor+1, len(m.resolutions)-1)
+			}
+		case "k":
+			if m.resolution == "" {
+				m.cursor = max(m.cursor-1, 0)
+			}
+		case "l":
+			if m.resolution != "" {
+				m.subcursor = min(
+					m.subcursor+1,
+					len(m.monitor.modes[m.resolution])-1,
+				)
+			}
+		case "enter":
+			if m.resolution == "" {
+				m.resolution = m.resolutions[m.cursor]
+				m.subcursor = 0
+			} else {
+				m.refreshRate = m.monitor.modes[m.resolution][m.subcursor]
+				setRes(
+					m.monitors,
+					m.name,
+					fmt.Sprintf(
+						"%v@%v",
+						m.resolution,
+						m.refreshRate,
+					),
+				)
+				return m, nil
+			}
+		case "q":
+			if m.resolution == "" {
+				return monitorSelectPage{}.New(m.monitors), nil
+			}
+			m.resolution = ""
 		case "ctrl+c":
 			return m, tea.Quit
 		}
@@ -52,19 +92,65 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m resolutionSelectPage) View() string {
 	output := fmt.Sprintf(" [[%v]]\n\n", m.name)
 	for i, res := range m.resolutions {
-		if i == m.selection {
+
+		if i == m.cursor {
 			output += ">["
 			output += fmt.Sprint(res, "]\n")
 		} else {
 			output += "  "
-			output += fmt.Sprint(res, "\n")
+			output += fmt.Sprint(res, " \n")
 		}
+
 	}
-	if m.selection == len(m.resolutions) {
-		output += "\n>[[REFRESH RESOLUTIONS]]"
-	} else {
-		output += "\n  [REFRESH RESOLUTIONS] "
+
+	var refreshRates string
+	if m.resolution != "" {
+		refreshRates = m.renderRefreshRates()
 	}
-    output += "-WARNING: This can cause resolutions to disappear"
-	return output
+
+	withRightBorder := lipgloss.NewStyle().
+		BorderStyle(lipgloss.NormalBorder()).
+		BorderRight(true)
+
+	return lipgloss.Place(
+		windowWidth,
+		windowHeight,
+		lipgloss.Left,
+		lipgloss.Top,
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+
+			lipgloss.JoinHorizontal(
+				lipgloss.Top,
+				withRightBorder.Render(output),
+				refreshRates,
+			),
+			lipgloss.PlaceVertical(
+				windowHeight-(len(m.resolutions)+3),
+				lipgloss.Bottom,
+				getHelp(),
+			),
+		),
+	)
+}
+
+func (m resolutionSelectPage) renderRefreshRates() string {
+	refreshRates := " Select A Refresh Rate\n" + "\n"
+	for _, res := range m.resolutions {
+		for i, rate := range m.monitor.modes[res] {
+
+			if res != m.resolution {
+				continue
+			}
+
+			if i == m.subcursor {
+				refreshRates += fmt.Sprint(" >[", rate, "] ")
+			} else {
+				refreshRates += fmt.Sprint("   ", rate, "  ")
+			}
+		}
+
+		refreshRates += "\n"
+	}
+	return refreshRates
 }

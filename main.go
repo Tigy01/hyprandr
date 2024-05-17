@@ -6,7 +6,11 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
+
+var windowWidth int
+var windowHeight int
 
 func main() {
 	currentMonitors, err := getCurrentSettings()
@@ -28,16 +32,6 @@ func main() {
 		"Used to list all current resolutions",
 		func(s string) error {
 			printResolutions(currentMonitors)
-			return nil
-		},
-	)
-
-	flag.BoolFunc(
-		"refresh",
-		"Used to refresh the list of resolutions",
-		func(s string) error {
-			currentMonitors = getResolutions(currentMonitors)
-			rewriteConfig(currentMonitors)
 			return nil
 		},
 	)
@@ -72,4 +66,10 @@ func main() {
 	fmt.Println("\nmust add an additional arg")
 	return
 
+}
+
+func getHelp() string {
+	return lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+        Render(" HELP: H -> Left, J -> Down, K -> Up, L -> Right, RETURN -> Select, Q -> Back ")
 }

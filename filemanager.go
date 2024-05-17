@@ -15,6 +15,8 @@ func getConfigPath() (path string, err error) {
 	return fmt.Sprintf("%s/hypr/displays.conf", configDir), nil
 }
 
+// Returns a map of names to monitor structs with a variety of information
+// about them
 func getCurrentSettings() (map[string]*monitor, error) {
 	monitors := map[string]*monitor{}
 
@@ -33,7 +35,6 @@ func getCurrentSettings() (map[string]*monitor, error) {
 	lines := []string{}
 
 	scanner := bufio.NewScanner(displayFile)
-	name := ""
 	for scanner.Scan() {
 		line := strings.ReplaceAll(scanner.Text(), " ", "")
 		lines = append(lines, line)
@@ -42,49 +43,23 @@ func getCurrentSettings() (map[string]*monitor, error) {
 			continue
 		}
 
-		if strings.Contains(line, "monitor") {
+		if line, found := strings.CutPrefix(line, "monitor="); found == true {
 			name, monitor := parseMonitorLine(line)
 			monitors[name] = monitor
 			continue
 		}
+	}
 
-		if delimiter := strings.Index(line, ":"); delimiter > 0 {
-			name = line[delimiter+1:]
-			continue
+	avaliableMonitors, err := getMonitors()
+	for name, monitor := range monitors {
+		if err != nil {
+			return nil, err
 		}
-
-		m, ok := monitors[name]
-		if !ok {
-			continue
-		}
-		m.resolutions = append(m.resolutions, line[1:])
+		monitor.modes = avaliableMonitors[name].modes
+        monitor.resolutions = avaliableMonitors[name].resolutions
 	}
 
 	return monitors, nil
-}
-
-func saveResolutions(monitors map[string]*monitor) {
-	configPath, err := getConfigPath()
-	file, err2 := os.OpenFile(configPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	if err != nil || err2 != nil {
-		fmt.Println("could not write res")
-		return
-	}
-	defer file.Close()
-
-	file.WriteString("# Current Resolutions #\n")
-	for k, m := range monitors {
-		resolutions := m.sortResolutions()
-
-		_, err = file.WriteString("\n#Name:" + fmt.Sprint(k) + "\n")
-		if err != nil {
-			fmt.Printf("err: %v\n", err)
-			return
-		}
-		for _, r := range resolutions {
-			file.WriteString("#" + fmt.Sprintln(r))
-		}
-	}
 }
 
 func rewriteConfig(currentMonitors map[string]*monitor) {
@@ -106,24 +81,14 @@ func rewriteConfig(currentMonitors map[string]*monitor) {
 		line := fmt.Sprintf("monitor=%s, %s, %sx%s, %s\n", name, monitor.currentRes, monitor.hOffset, monitor.vOffset, monitor.scale)
 		file.WriteString(line)
 	}
-	saveResolutions(currentMonitors)
 }
 
 func parseMonitorLine(line string) (name string, newMonitor *monitor) {
-	line = line[strings.Index(line, "=")+1:]
-	name = line[:strings.Index(line, ",")]
-
-	line = line[strings.Index(line, ",")+1:]
-	resolution := line[:strings.Index(line, ",")]
-
-	line = line[strings.Index(line, ",")+1:]
-	hoffset := line[:strings.Index(line, "x")]
-
-	line = line[strings.Index(line, "x")+1:]
-	voffset := line[:strings.Index(line, ",")]
-
-	line = line[strings.Index(line, ",")+1:]
-	scale := line
+	name, line, _ = strings.Cut(line, ",")
+	resolution, line, _ := strings.Cut(line, ",")
+	hoffset, line, _ := strings.Cut(line, "x")
+	voffset, line, _ := strings.Cut(line, ",")
+	scale, _, _ := strings.Cut(line, ",")
 	return name, &monitor{
 		resolutions: []string{},
 		currentRes:  resolution,

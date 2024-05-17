@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"slices"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type monitorSelectPage struct {
@@ -18,7 +18,7 @@ func (p monitorSelectPage) New(monitors map[string]*monitor) monitorSelectPage {
 	for n := range monitors {
 		monitorNames = append(monitorNames, n)
 	}
-    slices.Sort(monitorNames)
+	slices.Sort(monitorNames)
 	return monitorSelectPage{
 		selection:    0,
 		monitors:     monitors,
@@ -32,6 +32,9 @@ func (m monitorSelectPage) Init() tea.Cmd {
 
 func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		windowWidth = msg.Width
+		windowHeight = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "k":
@@ -41,7 +44,10 @@ func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.selection = min(m.selection+1, len(m.monitorNames)-1)
 			return m, nil
 		case "enter":
-			nextPage := resolutionSelectPage{}.New(m.monitorNames[m.selection], m.monitors)
+			nextPage := resolutionSelectPage{}.New(
+				m.monitorNames[m.selection],
+				m.monitors,
+			)
 			return nextPage, nil
 		case "ctrl+c", "q":
 			return m, tea.Quit
@@ -53,12 +59,26 @@ func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m monitorSelectPage) View() string {
 	output := ""
 	for i, name := range m.monitorNames {
+		output += "\n"
 		if i == m.selection {
-			output += ">"
+			output += ">[" + name + "]"
 		} else {
-			output += " "
+			output += "  " + name
 		}
-		output += fmt.Sprint("[", name, "]\n")
 	}
-	return output
+	return lipgloss.Place(
+		windowWidth,
+		windowHeight,
+		lipgloss.Left,
+		lipgloss.Top,
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			output,
+			lipgloss.PlaceVertical(
+				windowHeight-(len(m.monitorNames)),
+				lipgloss.Bottom,
+				lipgloss.NewStyle().Render(getHelp()),
+			),
+		),
+	)
 }
