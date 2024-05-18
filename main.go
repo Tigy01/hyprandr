@@ -15,6 +15,7 @@ var windowHeight int
 func main() {
 	currentMonitors, err := getCurrentSettings()
 	if err != nil {
+		fmt.Printf("err: %v\n", err)
 		return
 	}
 
@@ -54,12 +55,22 @@ func main() {
 	}
 
 	if selection != -1 {
-		changeRes(currentMonitors, monitorName, selection)
+		err := changeRes(currentMonitors, monitorName, selection)
+
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+
 		return
 	}
 
 	if customRes != "none" {
-		setRes(currentMonitors, monitorName, customRes)
+		err := setRes(currentMonitors, monitorName, customRes)
+
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+
 		return
 	}
 
@@ -69,7 +80,13 @@ func main() {
 }
 
 func getHelp() string {
-	return lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
-        Render(" HELP: H -> Left, J -> Down, K -> Up, L -> Right, RETURN -> Select, Q -> Back ")
+	return lipgloss.JoinHorizontal(lipgloss.Bottom,
+		lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder(), true, false, true, true).
+			Foreground(lipgloss.Color("#5555ff")).
+			Render(" HELP "+lipgloss.NormalBorder().Right, " "),
+		lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder(), true, true, true, false).
+			Render("H -> Left | J -> Down | K -> Up | L -> Right | RETURN -> Select | Q -> Back "),
+	)
 }

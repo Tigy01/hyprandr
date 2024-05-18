@@ -66,15 +66,16 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.subcursor = 0
 			} else {
 				m.refreshRate = m.monitor.modes[m.resolution][m.subcursor]
-				setRes(
+				err := setRes(
 					m.monitors,
 					m.name,
-					fmt.Sprintf(
-						"%v@%v",
-						m.resolution,
-						m.refreshRate,
-					),
+					fmt.Sprintf("%v@%v", m.resolution, m.refreshRate),
 				)
+
+				if err != nil {
+					panic(fmt.Sprintf("err: %v\n", err))
+				}
+
 				return m, nil
 			}
 		case "q":
