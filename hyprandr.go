@@ -5,38 +5,57 @@ import (
 	"strings"
 )
 
-func setRes(currentMonitors map[string]*monitor, monitorName string, newRes string) {
+func createDefaultConfig() error {
+	monitors, err := getMonitors()
+
+	if err != nil {
+		return err
+	}
+
+	defaultHOffset := "0"
+	for _, monitor := range monitors {
+		monitor.currentRes = monitor.resolutions[0]
+		monitor.currentRes += fmt.Sprintf("@%v", monitor.modes[monitor.currentRes][0])
+		monitor.hOffset = defaultHOffset
+		monitor.vOffset = "0"
+		monitor.scale = "1"
+
+		defaultHOffset = monitor.currentRes[:strings.Index(monitor.currentRes, "x")]
+	}
+	return rewriteConfig(monitors)
+}
+
+func setRes(currentMonitors map[string]*monitor, monitorName string, newRes string) error {
 	selection, ok := currentMonitors[monitorName]
 
 	if strings.Index(newRes, "@") == -1 {
-		fmt.Println("Must include a refresh rate in the form of @[REFRESH RATE]")
-		return
+		return fmt.Errorf(
+			"Must include a refresh rate in the form of @[REFRESH RATE]",
+		)
 	}
 
 	if !ok {
-		fmt.Println("Invalid monitor name")
-		return
+		return fmt.Errorf("Invalid Monitor Name: %v", monitorName)
 	}
 
 	selection.currentRes = newRes
-	rewriteConfig(currentMonitors)
+	return rewriteConfig(currentMonitors)
 }
 
-func changeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) {
+func changeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) error {
 	selection, ok := currentMonitors[monitorName]
 
 	if !ok {
-		fmt.Println("Invalid monitor name")
-		return
+		return fmt.Errorf("Invalid monitor name")
 	}
 
 	for i, res := range currentMonitors[monitorName].resolutions {
 		if i == resIndex {
-			selection.currentRes = res + fmt.Sprintf("@%v", selection.modes[res][0]) 
+			selection.currentRes = res + fmt.Sprintf("@%v", selection.modes[res][0])
 		}
 	}
-    
-	rewriteConfig(currentMonitors)
+
+	return rewriteConfig(currentMonitors)
 }
 
 func printCurrentConfig(currentMonitors map[string]*monitor) {
@@ -57,24 +76,4 @@ func printResolutions(monitors map[string]*monitor) {
 		}
 		fmt.Println("")
 	}
-}
-
-func createDefaultConfig() {
-	monitors, err := getMonitors()
-
-	if err != nil {
-		return
-	}
-
-	defaultHOffset := "0"
-	for _, monitor := range monitors {
-		monitor.currentRes = monitor.resolutions[0]
-		monitor.currentRes += fmt.Sprintf("@%v", monitor.modes[monitor.currentRes][0])
-		monitor.hOffset = defaultHOffset
-		monitor.vOffset = "0"
-		monitor.scale = "1"
-
-		defaultHOffset = monitor.currentRes[:strings.Index(monitor.currentRes, "x")]
-	}
-	rewriteConfig(monitors)
 }

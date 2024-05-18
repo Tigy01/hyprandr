@@ -56,31 +56,30 @@ func getCurrentSettings() (map[string]*monitor, error) {
 			return nil, err
 		}
 		monitor.modes = avaliableMonitors[name].modes
-        monitor.resolutions = avaliableMonitors[name].resolutions
+		monitor.resolutions = avaliableMonitors[name].resolutions
 	}
 
 	return monitors, nil
 }
 
-func rewriteConfig(currentMonitors map[string]*monitor) {
+func rewriteConfig(currentMonitors map[string]*monitor) error {
 	config, err := getConfigPath()
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
-		return
+		return err
 	}
 
 	os.Remove(config)
 	file, err := os.Create(config)
 	defer file.Close()
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
-		return
+		return err
 	}
 
 	for name, monitor := range currentMonitors {
 		line := fmt.Sprintf("monitor=%s, %s, %sx%s, %s\n", name, monitor.currentRes, monitor.hOffset, monitor.vOffset, monitor.scale)
 		file.WriteString(line)
 	}
+	return nil
 }
 
 func parseMonitorLine(line string) (name string, newMonitor *monitor) {
