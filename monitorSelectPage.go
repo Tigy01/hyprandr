@@ -8,9 +8,10 @@ import (
 )
 
 type monitorSelectPage struct {
-	selection    int
-	monitors     map[string]*monitor
-	monitorNames []string
+	cursor     int
+	monitors      map[string]*monitor
+	monitorNames  []string
+	previousInput string
 }
 
 func (p monitorSelectPage) New(monitors map[string]*monitor) monitorSelectPage {
@@ -20,7 +21,7 @@ func (p monitorSelectPage) New(monitors map[string]*monitor) monitorSelectPage {
 	}
 	slices.Sort(monitorNames)
 	return monitorSelectPage{
-		selection:    0,
+		cursor:    0,
 		monitors:     monitors,
 		monitorNames: monitorNames,
 	}
@@ -38,20 +39,25 @@ func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "k":
-			m.selection = max(m.selection-1, 0)
-			return m, nil
+			m.cursor = max(m.cursor-1, 0)
 		case "j":
-			m.selection = min(m.selection+1, len(m.monitorNames)-1)
-			return m, nil
+			m.cursor = min(m.cursor+1, len(m.monitorNames)-1)
+		case "g":
+			if m.previousInput == "g" {
+				m.cursor = 0
+			}
+		case "G":
+			m.cursor = len(m.monitorNames) - 1
 		case "enter":
 			nextPage := resolutionSelectPage{}.New(
-				m.monitorNames[m.selection],
+				m.monitorNames[m.cursor],
 				m.monitors,
 			)
 			return nextPage, nil
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
+		m.previousInput = msg.String()
 	}
 	return m, nil
 }
@@ -60,7 +66,7 @@ func (m monitorSelectPage) View() string {
 	output := ""
 	for i, name := range m.monitorNames {
 		output += "\n"
-		if i == m.selection {
+		if i == m.cursor {
 			output += ">[" + name + "]"
 		} else {
 			output += "  " + name
