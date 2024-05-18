@@ -23,6 +23,14 @@ following line.
 ```
 source = $HOME/.config/hypr/displays.conf
 ```
+## Use
+
+Move up and down with k and j. 
+
+Select with enter.
+
+Quit with q.
+
 ## CLI Commands
 The tool comes with an integrated cli which can be accessed by running hyprandr -cmd.
 
