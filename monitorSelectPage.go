@@ -56,16 +56,44 @@ func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m monitorSelectPage) View() string {
-	output := ""
-	for i, name := range m.monitorNames {
-		output += "\n"
-		if i == m.selection {
-			output += ">[" + name + "]"
-		} else {
-			output += "  " + name
-		}
+func padRight(input string, lineLength int, fill string) string {
+	for len(input) < lineLength {
+		input += fill
 	}
+	return input
+}
+
+func truncate(input string, lineLength int) string {
+	if len(input) > lineLength {
+		return input[0:lineLength-2] + "..."
+	}
+	return input
+}
+
+func (m monitorSelectPage) View() string {
+	var names string
+	var resolutions string
+	for i, name := range m.monitorNames {
+		var line string
+		if i == m.selection {
+			line += ">[" + name + "]"
+		} else {
+			line += "  " + name + " "
+		}
+		line = padRight(line, 12, " ")
+		line = truncate(line, 12)
+		names += line + "\n"
+		resolutions += m.monitors[name].currentRes + "\n"
+	}
+	names = lipgloss.NewStyle().
+		Border(
+			lipgloss.NormalBorder(),
+			false,
+			true,
+			false,
+			false,
+		).MarginRight(1).
+		Render(names)
 	return lipgloss.Place(
 		windowWidth,
 		windowHeight,
@@ -73,9 +101,13 @@ func (m monitorSelectPage) View() string {
 		lipgloss.Top,
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			output,
+			lipgloss.JoinHorizontal(
+				lipgloss.Left,
+				names,
+				resolutions,
+			),
 			lipgloss.PlaceVertical(
-				windowHeight-(len(m.monitorNames)),
+				windowHeight-(len(m.monitorNames)+5),
 				lipgloss.Bottom,
 				lipgloss.NewStyle().Render(getHelp()),
 			),

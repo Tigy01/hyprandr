@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Returns the path of the displays.conf file within the user's filesystem
 func getConfigPath() (path string, err error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
@@ -82,6 +83,7 @@ func rewriteConfig(currentMonitors map[string]*monitor) error {
 	return nil
 }
 
+// Parses a hyprland formatted monitor line
 func parseMonitorLine(line string) (name string, newMonitor *monitor) {
 	name, line, _ = strings.Cut(line, ",")
 	resolution, line, _ := strings.Cut(line, ",")
