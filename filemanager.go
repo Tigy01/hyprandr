@@ -77,7 +77,15 @@ func rewriteConfig(currentMonitors map[string]*monitor) error {
 	}
 
 	for name, monitor := range currentMonitors {
-		line := fmt.Sprintf("monitor=%s, %s, %sx%s, %s\n", name, monitor.currentRes, monitor.hOffset, monitor.vOffset, monitor.scale)
+		line := fmt.Sprintf(
+			"monitor=%s, %s, %sx%s, %s, %s\n",
+			name,
+			monitor.currentRes,
+			monitor.hOffset,
+			monitor.vOffset,
+			monitor.scale,
+			monitor.otherOptions,
+		)
 		file.WriteString(line)
 	}
 	return nil
@@ -89,12 +97,13 @@ func parseMonitorLine(line string) (name string, newMonitor *monitor) {
 	resolution, line, _ := strings.Cut(line, ",")
 	hoffset, line, _ := strings.Cut(line, "x")
 	voffset, line, _ := strings.Cut(line, ",")
-	scale, _, _ := strings.Cut(line, ",")
+	scale, other, _ := strings.Cut(line, ",")
 	return name, &monitor{
-		resolutions: []string{},
-		currentRes:  resolution,
-		hOffset:     hoffset,
-		vOffset:     voffset,
-		scale:       scale,
+		resolutions:  []string{},
+		currentRes:   resolution,
+		hOffset:      hoffset,
+		vOffset:      voffset,
+		scale:        scale,
+		otherOptions: other,
 	}
 }

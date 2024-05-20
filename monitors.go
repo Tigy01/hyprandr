@@ -9,19 +9,20 @@ import (
 )
 
 type monitor struct {
-	resolutions []string
-	modes       map[string][]int //resolution to refresh rates
-	currentRes  string
-	hOffset     string
-	vOffset     string
-	scale       string
+	resolutions  []string
+	modes        map[string][]int //resolution to refresh rates
+	currentRes   string
+	hOffset      string
+	vOffset      string
+	scale        string
+	otherOptions string
 }
 
 // Gets the monitor modes from the 'hyprctl monitors all' command
 //
-// returns map of names to monitors containing lists of resolutions and 
+// returns map of names to monitors containing lists of resolutions and
 // map of resolutions to modes
-func getMonitors() (map[string]*monitor, error) { 
+func getMonitors() (map[string]*monitor, error) {
 	rawSystemInfo, err := exec.Command("hyprctl", "monitors", "all").Output()
 	if err != nil {
 		return nil, err
@@ -46,10 +47,10 @@ func getMonitors() (map[string]*monitor, error) {
 		}
 
 		parseModes(line, currentMonitor)
-        for res := range currentMonitor.modes{
-            slices.Sort(currentMonitor.modes[res])
-            slices.Reverse(currentMonitor.modes[res])
-        }
+		for res := range currentMonitor.modes {
+			slices.Sort(currentMonitor.modes[res])
+			slices.Reverse(currentMonitor.modes[res])
+		}
 	}
 	return monitors, nil
 }
@@ -64,8 +65,8 @@ func parseModes(line string, currentMonitor *monitor) {
 	modeList := strings.Split(line[modeIndex+16:], " ")
 	for _, element := range modeList {
 		resolution, rate, _ := strings.Cut(element, "@")
-		rate, _ = strings.CutSuffix(rate, "Hz") 
-        convertedRate, err := strconv.ParseFloat(rate, 32)
+		rate, _ = strings.CutSuffix(rate, "Hz")
+		convertedRate, err := strconv.ParseFloat(rate, 32)
 		if err != nil {
 			continue
 		}

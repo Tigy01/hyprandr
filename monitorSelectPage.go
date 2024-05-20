@@ -8,7 +8,7 @@ import (
 )
 
 type monitorSelectPage struct {
-	cursor     int
+	cursor        int
 	monitors      map[string]*monitor
 	monitorNames  []string
 	previousInput string
@@ -21,7 +21,7 @@ func (p monitorSelectPage) New(monitors map[string]*monitor) monitorSelectPage {
 	}
 	slices.Sort(monitorNames)
 	return monitorSelectPage{
-		cursor:    0,
+		cursor:       0,
 		monitors:     monitors,
 		monitorNames: monitorNames,
 	}
