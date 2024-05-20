@@ -124,6 +124,7 @@ func (m resolutionSelectPage) View() string {
 	}
 
 	withRightBorder := lipgloss.NewStyle().
+    PaddingRight(3).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderRight(true)
 
