@@ -8,10 +8,11 @@ import (
 )
 
 type resolutionSelectPage struct {
-	cursor      int
-	subcursor   int
-	resolution  string
-	refreshRate int
+	cursor        int
+	subcursor     int
+	previousInput string
+	resolution    string
+	refreshRate   int
 
 	name        string
 	resolutions []string
@@ -60,6 +61,17 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					len(m.monitor.modes[m.resolution])-1,
 				)
 			}
+		case "g":
+			if m.resolution != "" {
+				break
+			}
+			if m.previousInput == "g" {
+				m.cursor = 0
+			}
+		case "G":
+			if m.resolution == "" {
+				m.cursor = len(m.resolutions) - 1
+			}
 		case "enter":
 			if m.resolution == "" {
 				m.resolution = m.resolutions[m.cursor]
@@ -86,6 +98,8 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 		}
+
+		m.previousInput = msg.String()
 	}
 	return m, nil
 }
