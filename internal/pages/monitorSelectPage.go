@@ -1,37 +1,55 @@
-package main
+package pages
 
 import (
 	"slices"
-
+    "github.com/Tigy01/hyprandr/internal/monitors"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type monitorSelectPage struct {
-	cursor     int
+type monitor = monitors.Monitor
+
+type MonitorSelectPage struct {
+	cursor        int
 	monitors      map[string]*monitor
 	monitorNames  []string
 	previousInput string
 }
 
-func (p monitorSelectPage) New(monitors map[string]*monitor) monitorSelectPage {
+var windowWidth int
+var windowHeight int
+
+
+func getHelp() string {
+	return lipgloss.JoinHorizontal(lipgloss.Bottom,
+		lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder(), true, false, true, true).
+			Foreground(lipgloss.Color("#5555ff")).
+			Render(" HELP "+lipgloss.NormalBorder().Right, " "),
+		lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder(), true, true, true, false).
+			Render("H -> Left | J -> Down | K -> Up | L -> Right | RETURN -> Select | Q -> Back "),
+	)
+}
+
+func (p MonitorSelectPage) New(monitors map[string]*monitor) MonitorSelectPage {
 	monitorNames := make([]string, 0)
 	for n := range monitors {
 		monitorNames = append(monitorNames, n)
 	}
 	slices.Sort(monitorNames)
-	return monitorSelectPage{
-		cursor:    0,
+	return MonitorSelectPage{
+		cursor:       0,
 		monitors:     monitors,
 		monitorNames: monitorNames,
 	}
 }
 
-func (m monitorSelectPage) Init() tea.Cmd {
+func (m MonitorSelectPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		windowWidth = msg.Width
@@ -49,7 +67,7 @@ func (m monitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "G":
 			m.cursor = len(m.monitorNames) - 1
 		case "enter":
-			nextPage := resolutionSelectPage{}.New(
+			nextPage := ResolutionSelectPage{}.New(
 				m.monitorNames[m.cursor],
 				m.monitors,
 			)
@@ -76,7 +94,7 @@ func truncate(input string, lineLength int) string {
 	return input
 }
 
-func (m monitorSelectPage) View() string {
+func (m MonitorSelectPage) View() string {
 	var names string
 	var resolutions string
 	for i, name := range m.monitorNames {
@@ -89,7 +107,7 @@ func (m monitorSelectPage) View() string {
 		line = padRight(line, 12, " ")
 		line = truncate(line, 12)
 		names += line + "\n"
-		resolutions += m.monitors[name].currentRes + "\n"
+		resolutions += m.monitors[name].CurrentRes + "\n"
 	}
 	names = lipgloss.NewStyle().
 		Border(

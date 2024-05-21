@@ -1,13 +1,14 @@
-package main
+package pages 
 
 import (
 	"fmt"
 
+    "github.com/Tigy01/hyprandr/internal/cli"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
-type resolutionSelectPage struct {
+type ResolutionSelectPage struct {
 	cursor        int
 	subcursor     int
 	previousInput string
@@ -21,9 +22,9 @@ type resolutionSelectPage struct {
 	monitors map[string]*monitor
 }
 
-func (p resolutionSelectPage) New(name string, monitors map[string]*monitor) resolutionSelectPage {
-	resolutions := monitors[name].resolutions
-	return resolutionSelectPage{
+func (p ResolutionSelectPage) New(name string, monitors map[string]*monitor) ResolutionSelectPage {
+	resolutions := monitors[name].Resolutions
+	return ResolutionSelectPage{
 		name:        name,
 		monitor:     monitors[name],
 		resolutions: resolutions,
@@ -31,11 +32,11 @@ func (p resolutionSelectPage) New(name string, monitors map[string]*monitor) res
 	}
 }
 
-func (m resolutionSelectPage) Init() tea.Cmd {
+func (m ResolutionSelectPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		windowWidth = msg.Width
@@ -58,7 +59,7 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.resolution != "" {
 				m.subcursor = min(
 					m.subcursor+1,
-					len(m.monitor.modes[m.resolution])-1,
+					len(m.monitor.Modes[m.resolution])-1,
 				)
 			}
 		case "g":
@@ -77,8 +78,8 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.resolution = m.resolutions[m.cursor]
 				m.subcursor = 0
 			} else {
-				m.refreshRate = m.monitor.modes[m.resolution][m.subcursor]
-				err := setRes(
+				m.refreshRate = m.monitor.Modes[m.resolution][m.subcursor]
+				err := cli.SetRes(
 					m.monitors,
 					m.name,
 					fmt.Sprintf("%v@%v", m.resolution, m.refreshRate),
@@ -92,7 +93,7 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "q":
 			if m.resolution == "" {
-				return monitorSelectPage{}.New(m.monitors), nil
+				return MonitorSelectPage{}.New(m.monitors), nil
 			}
 			m.resolution = ""
 		case "ctrl+c":
@@ -104,7 +105,7 @@ func (m resolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m resolutionSelectPage) View() string {
+func (m ResolutionSelectPage) View() string {
 	output := fmt.Sprintf(" [[%v]]\n\n", m.name)
 	for i, res := range m.resolutions {
 
@@ -150,10 +151,10 @@ func (m resolutionSelectPage) View() string {
 	)
 }
 
-func (m resolutionSelectPage) renderRefreshRates() string {
+func (m ResolutionSelectPage) renderRefreshRates() string {
 	refreshRates := " Select A Refresh Rate\n" + "\n"
 	for _, res := range m.resolutions {
-		for i, rate := range m.monitor.modes[res] {
+		for i, rate := range m.monitor.Modes[res] {
 
 			if res != m.resolution {
 				continue

@@ -4,11 +4,15 @@ An easy to use TUI for managing your monitors' resolutions in Hyprland
 ## Installation
 To install, clone the repo using git and build it with go. 
 
+make sure to grab the dependencies
 ```
-go mod tidy && go get && go build && GOBIN=~/.local/bin/ go install
+go mod tidy && go get 
+```
+then
+```
+go build -o ./bin/ ./cmd/* && cd ./bin/ && mv ./* ~/.local/bin 
 ```
 
-You may need to run go get and/or go mod tidy before building.
 
 ## Setup
 Upon running the program once, a default display.conf file will be generated

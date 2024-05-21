@@ -1,14 +1,16 @@
-package main
+package cli
 
 import (
 	"bufio"
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Tigy01/hyprandr/internal/monitors"
 )
 
 // Returns the path of the displays.conf file within the user's filesystem
-func getConfigPath() (path string, err error) {
+func GetConfigPath() (path string, err error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
@@ -18,10 +20,10 @@ func getConfigPath() (path string, err error) {
 
 // Returns a map of names to monitor structs with a variety of information
 // about them
-func getCurrentSettings() (map[string]*monitor, error) {
-	monitors := map[string]*monitor{}
+func GetCurrentSettings() (map[string]*monitor, error) {
+	currentMonitors := map[string]*monitor{}
 
-	configPath, err := getConfigPath()
+	configPath, err := GetConfigPath()
 	if err != nil {
 		return nil, err
 	}
@@ -29,8 +31,8 @@ func getCurrentSettings() (map[string]*monitor, error) {
 	displayFile, err := os.Open(configPath)
 	defer displayFile.Close()
 	if err != nil {
-		createDefaultConfig()
-		return getCurrentSettings()
+		CreateDefaultConfig()
+		return GetCurrentSettings()
 	}
 
 	lines := []string{}
@@ -46,25 +48,25 @@ func getCurrentSettings() (map[string]*monitor, error) {
 
 		if line, found := strings.CutPrefix(line, "monitor="); found == true {
 			name, monitor := parseMonitorLine(line)
-			monitors[name] = monitor
+			currentMonitors[name] = monitor
 			continue
 		}
 	}
 
-	avaliableMonitors, err := getMonitors()
-	for name, monitor := range monitors {
+	avaliableMonitors, err := monitors.GetMonitors()
+	for name, monitor := range currentMonitors {
 		if err != nil {
 			return nil, err
 		}
-		monitor.modes = avaliableMonitors[name].modes
-		monitor.resolutions = avaliableMonitors[name].resolutions
+		monitor.Modes = avaliableMonitors[name].Modes
+		monitor.Resolutions = avaliableMonitors[name].Resolutions
 	}
 
-	return monitors, nil
+	return currentMonitors, nil
 }
 
 func rewriteConfig(currentMonitors map[string]*monitor) error {
-	config, err := getConfigPath()
+	config, err := GetConfigPath()
 	if err != nil {
 		return err
 	}
@@ -77,7 +79,15 @@ func rewriteConfig(currentMonitors map[string]*monitor) error {
 	}
 
 	for name, monitor := range currentMonitors {
-		line := fmt.Sprintf("monitor=%s, %s, %sx%s, %s\n", name, monitor.currentRes, monitor.hOffset, monitor.vOffset, monitor.scale)
+		line := fmt.Sprintf(
+			"monitor=%s, %s, %sx%s, %s, %s\n",
+			name,
+			monitor.CurrentRes,
+			monitor.HOffset,
+			monitor.VOffset,
+			monitor.Scale,
+			monitor.OtherOptions,
+		)
 		file.WriteString(line)
 	}
 	return nil
@@ -89,12 +99,13 @@ func parseMonitorLine(line string) (name string, newMonitor *monitor) {
 	resolution, line, _ := strings.Cut(line, ",")
 	hoffset, line, _ := strings.Cut(line, "x")
 	voffset, line, _ := strings.Cut(line, ",")
-	scale, _, _ := strings.Cut(line, ",")
+	scale, other, _ := strings.Cut(line, ",")
 	return name, &monitor{
-		resolutions: []string{},
-		currentRes:  resolution,
-		hOffset:     hoffset,
-		vOffset:     voffset,
-		scale:       scale,
+		Resolutions:  []string{},
+		CurrentRes:   resolution,
+		HOffset:      hoffset,
+		VOffset:      voffset,
+		Scale:        scale,
+		OtherOptions: other,
 	}
 }
