@@ -1,4 +1,4 @@
-module hyprandr
+module github.com/Tigy01/hyprandr
 
 require (
 	github.com/charmbracelet/bubbletea v0.25.0
