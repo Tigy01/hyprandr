@@ -4,16 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
+    "github.com/Tigy01/hyprandr/internal/pages"
+    "github.com/Tigy01/hyprandr/internal/cli"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 var windowWidth int
 var windowHeight int
 
 func main() {
-	currentMonitors, err := getCurrentSettings()
+	currentMonitors, err := cli.GetCurrentSettings()
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		return
@@ -32,7 +32,7 @@ func main() {
 		"list",
 		"Used to list all current resolutions",
 		func(s string) error {
-			printResolutions(currentMonitors)
+			cli.PrintResolutions(currentMonitors)
 			return nil
 		},
 	)
@@ -40,7 +40,7 @@ func main() {
 
 	if !cmdMode && len(os.Args[1:]) == 0 {
 		tea.NewProgram(
-			monitorSelectPage{}.New(currentMonitors), tea.WithAltScreen(),
+			pages.MonitorSelectPage{}.New(currentMonitors), tea.WithAltScreen(),
 		).Run()
 		return
 	}
@@ -55,7 +55,7 @@ func main() {
 	}
 
 	if selection != -1 {
-		err := changeRes(currentMonitors, monitorName, selection)
+		err := cli.ChangeRes(currentMonitors, monitorName, selection)
 
 		if err != nil {
 			fmt.Printf("err: %v\n", err)
@@ -65,7 +65,7 @@ func main() {
 	}
 
 	if customRes != "none" {
-		err := setRes(currentMonitors, monitorName, customRes)
+		err := cli.SetRes(currentMonitors, monitorName, customRes)
 
 		if err != nil {
 			fmt.Printf("err: %v\n", err)
@@ -76,17 +76,4 @@ func main() {
 
 	fmt.Println("\nmust add an additional arg")
 	return
-
-}
-
-func getHelp() string {
-	return lipgloss.JoinHorizontal(lipgloss.Bottom,
-		lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder(), true, false, true, true).
-			Foreground(lipgloss.Color("#5555ff")).
-			Render(" HELP "+lipgloss.NormalBorder().Right, " "),
-		lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder(), true, true, true, false).
-			Render("H -> Left | J -> Down | K -> Up | L -> Right | RETURN -> Select | Q -> Back "),
-	)
 }

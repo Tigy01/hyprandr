@@ -1,4 +1,4 @@
-package main
+package monitors 
 
 import (
 	"math"
@@ -8,30 +8,30 @@ import (
 	"strings"
 )
 
-type monitor struct {
-	resolutions  []string
-	modes        map[string][]int //resolution to refresh rates
-	currentRes   string
-	hOffset      string
-	vOffset      string
-	scale        string
-	otherOptions string
+type Monitor struct {
+	Resolutions  []string
+	Modes        map[string][]int //resolution to refresh rates
+	CurrentRes   string
+	HOffset      string
+	VOffset      string
+	Scale        string
+	OtherOptions string
 }
 
-// Gets the monitor modes from the 'hyprctl monitors all' command
+// Gets the Monitor Modes from the 'hyprctl monitors all' command
 //
-// returns map of names to monitors containing lists of resolutions and
-// map of resolutions to modes
-func getMonitors() (map[string]*monitor, error) {
+// returns map of names to monitors containing lists of Resolutions and
+// map of Resolutions to Modes
+func GetMonitors() (map[string]*Monitor, error) {
 	rawSystemInfo, err := exec.Command("hyprctl", "monitors", "all").Output()
 	if err != nil {
 		return nil, err
 	}
 
 	systemInfo := strings.Split(string(rawSystemInfo), "\n")
-	monitors := map[string]*monitor{}
+	monitors := map[string]*Monitor{}
 
-	var currentMonitor *monitor
+	var currentMonitor *Monitor
 	for _, line := range systemInfo {
 		monitorIndex := strings.Index(line, "Monitor ")
 
@@ -39,23 +39,23 @@ func getMonitors() (map[string]*monitor, error) {
 		if monitorIndex > -1 && monitorIndex < 2 {
 			line = line[monitorIndex+8:]
 			name := line[:strings.Index(line, " ")]
-			monitors[name] = &monitor{
-				modes: make(map[string][]int, 0),
+			monitors[name] = &Monitor{
+				Modes: make(map[string][]int, 0),
 			}
 			currentMonitor = monitors[name]
 			continue
 		}
 
 		parseModes(line, currentMonitor)
-		for res := range currentMonitor.modes {
-			slices.Sort(currentMonitor.modes[res])
-			slices.Reverse(currentMonitor.modes[res])
+		for res := range currentMonitor.Modes {
+			slices.Sort(currentMonitor.Modes[res])
+			slices.Reverse(currentMonitor.Modes[res])
 		}
 	}
 	return monitors, nil
 }
 
-func parseModes(line string, currentMonitor *monitor) {
+func parseModes(line string, currentMonitor *Monitor) {
 	modeIndex := strings.Index(line, "availableModes: ")
 
 	if modeIndex == -1 {
@@ -71,9 +71,9 @@ func parseModes(line string, currentMonitor *monitor) {
 			continue
 		}
 		finalRate := int(math.Round(convertedRate))
-		if !slices.Contains(currentMonitor.resolutions, resolution) {
-			currentMonitor.resolutions = append(currentMonitor.resolutions, resolution)
+		if !slices.Contains(currentMonitor.Resolutions, resolution) {
+			currentMonitor.Resolutions = append(currentMonitor.Resolutions, resolution)
 		}
-		currentMonitor.modes[resolution] = append(currentMonitor.modes[resolution], finalRate)
+		currentMonitor.Modes[resolution] = append(currentMonitor.Modes[resolution], finalRate)
 	}
 }
