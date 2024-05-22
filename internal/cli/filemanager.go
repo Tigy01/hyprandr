@@ -9,6 +9,8 @@ import (
 	"github.com/Tigy01/hyprandr/internal/monitors"
 )
 
+var restOfFile []string
+
 // Returns the path of the displays.conf file within the user's filesystem
 func GetConfigPath() (path string, err error) {
 	configDir, err := os.UserConfigDir()
@@ -51,6 +53,8 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 			currentMonitors[name] = monitor
 			continue
 		}
+
+		restOfFile = append(restOfFile, line)
 	}
 
 	avaliableMonitors, err := monitors.GetMonitors()
@@ -90,6 +94,11 @@ func rewriteConfig(currentMonitors map[string]*monitor) error {
 		)
 		file.WriteString(line)
 	}
+
+	for _, line := range restOfFile {
+		file.WriteString(line)
+	}
+
 	return nil
 }
 
