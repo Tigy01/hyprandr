@@ -96,7 +96,7 @@ func rewriteConfig(currentMonitors map[string]*monitor) error {
 	}
 
 	for _, line := range restOfFile {
-		file.WriteString(line)
+		file.WriteString(line + "\n")
 	}
 
 	return nil
