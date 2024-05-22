@@ -25,6 +25,11 @@ func GetConfigPath() (path string, err error) {
 func GetCurrentSettings() (map[string]*monitor, error) {
 	currentMonitors := map[string]*monitor{}
 
+	avaliableMonitors, err := monitors.GetMonitors()
+	if err != nil {
+		return nil, err
+	}
+
 	configPath, err := GetConfigPath()
 	if err != nil {
 		return nil, err
@@ -48,22 +53,23 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 			continue
 		}
 
-		if line, found := strings.CutPrefix(line, "monitor="); found == true {
-			name, monitor := parseMonitorLine(line)
-			currentMonitors[name] = monitor
-			continue
-		}
+		if cutLine, found := strings.CutPrefix(line, "monitor="); found == true {
+			name, monitor := parseMonitorLine(cutLine)
 
+			if avaliableMonitor, ok := avaliableMonitors[name]; ok {
+				currentMonitors[name] = monitor
+				currentMonitors[name].Resolutions = avaliableMonitor.Resolutions
+				currentMonitors[name].Modes = avaliableMonitor.Modes
+				continue
+			}
+
+			if _, found := strings.CutSuffix(line, "#Invalid"); !found {
+				line += " #Invalid"
+			}
+
+			fmt.Println("Error: Invalid Monitor name in config:", name)
+		}
 		restOfFile = append(restOfFile, line)
-	}
-
-	avaliableMonitors, err := monitors.GetMonitors()
-	for name, monitor := range currentMonitors {
-		if err != nil {
-			return nil, err
-		}
-		monitor.Modes = avaliableMonitors[name].Modes
-		monitor.Resolutions = avaliableMonitors[name].Resolutions
 	}
 
 	return currentMonitors, nil
