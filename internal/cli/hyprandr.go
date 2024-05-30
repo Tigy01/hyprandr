@@ -25,7 +25,7 @@ func CreateDefaultConfig() error {
 
 		defaultHOffset = monitor.CurrentRes[:strings.Index(monitor.CurrentRes, "x")]
 	}
-	return rewriteConfig(currentMonitors)
+	return RewriteConfig(currentMonitors)
 }
 
 func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes string) error {
@@ -41,7 +41,7 @@ func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes stri
 	}
 
 	selection.CurrentRes = newRes
-	return rewriteConfig(currentMonitors)
+	return RewriteConfig(currentMonitors)
 }
 
 func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) error {
@@ -57,7 +57,7 @@ func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex
 		}
 	}
 
-	return rewriteConfig(currentMonitors)
+	return RewriteConfig(currentMonitors)
 }
 
 func PrintCurrentConfig(currentMonitors map[string]*monitor) {

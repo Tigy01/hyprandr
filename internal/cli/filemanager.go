@@ -10,7 +10,6 @@ import (
 )
 
 var restOfFile []string
-
 // Returns the path of the displays.conf file within the user's filesystem
 func GetConfigPath() (path string, err error) {
 	configDir, err := os.UserConfigDir()
@@ -24,6 +23,7 @@ func GetConfigPath() (path string, err error) {
 // about them
 func GetCurrentSettings() (map[string]*monitor, error) {
 	currentMonitors := map[string]*monitor{}
+    restOfFile = []string{}
 
 	avaliableMonitors, err := monitors.GetMonitors()
 	if err != nil {
@@ -66,8 +66,6 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 			if _, found := strings.CutSuffix(line, "#Invalid"); !found {
 				line += " #Invalid"
 			}
-
-			fmt.Println("Error: Invalid Monitor name in config:", name)
 		}
 		restOfFile = append(restOfFile, line)
 	}
@@ -75,7 +73,7 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 	return currentMonitors, nil
 }
 
-func rewriteConfig(currentMonitors map[string]*monitor) error {
+func RewriteConfig(currentMonitors map[string]*monitor) error {
 	config, err := GetConfigPath()
 	if err != nil {
 		return err

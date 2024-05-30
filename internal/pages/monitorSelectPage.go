@@ -1,8 +1,11 @@
 package pages
 
 import (
+	"fmt"
 	"slices"
-    "github.com/Tigy01/hyprandr/internal/monitors"
+
+	"github.com/Tigy01/hyprandr/internal/cli"
+	"github.com/Tigy01/hyprandr/internal/monitors"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -19,16 +22,15 @@ type MonitorSelectPage struct {
 var windowWidth int
 var windowHeight int
 
-
 func getHelp() string {
 	return lipgloss.JoinHorizontal(lipgloss.Bottom,
 		lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder(), true, false, true, true).
 			Foreground(lipgloss.Color("#5555ff")).
-			Render(" HELP "+lipgloss.NormalBorder().Right, " "),
+			Render(" HELP "+lipgloss.NormalBorder().Right),
 		lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder(), true, true, true, false).
-			Render("H -> Left | J -> Down | K -> Up | L -> Right | RETURN -> Select | Q -> Back "),
+			Render(" h -> Left | j -> Down | k -> Up | l -> Right | RETURN -> Select | q -> Back | r -> Refresh "),
 	)
 }
 
@@ -74,6 +76,15 @@ func (m MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return nextPage, nil
 		case "ctrl+c", "q":
 			return m, tea.Quit
+		case "r":
+			var err error
+			m.monitors, err = cli.GetCurrentSettings()
+			if err != nil {
+				fmt.Println(err)
+				return nil, tea.Quit
+			}
+            cli.RewriteConfig(m.monitors)
+			return MonitorSelectPage{}.New(m.monitors), nil
 		}
 		m.previousInput = msg.String()
 	}
@@ -131,7 +142,7 @@ func (m MonitorSelectPage) View() string {
 				resolutions,
 			),
 			lipgloss.PlaceVertical(
-				windowHeight-(len(m.monitorNames)+5),
+				windowHeight-(len(m.monitorNames)+1),
 				lipgloss.Bottom,
 				lipgloss.NewStyle().Render(getHelp()),
 			),
