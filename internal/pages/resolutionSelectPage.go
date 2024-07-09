@@ -1,9 +1,9 @@
-package pages 
+package pages
 
 import (
 	"fmt"
 
-    "github.com/Tigy01/hyprandr/internal/cli"
+	"github.com/Tigy01/hyprandr/internal/cli"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -98,6 +98,15 @@ func (m ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.resolution = ""
 		case "ctrl+c":
 			return m, tea.Quit
+		case "r":
+			var err error
+			m.monitors, err = cli.GetCurrentSettings()
+			if err != nil {
+				fmt.Println(err)
+				return nil, tea.Quit
+			}
+			cli.RewriteConfig(m.monitors)
+			return MonitorSelectPage{}.New(m.monitors), nil
 		}
 
 		m.previousInput = msg.String()
@@ -125,7 +134,7 @@ func (m ResolutionSelectPage) View() string {
 	}
 
 	withRightBorder := lipgloss.NewStyle().
-    PaddingRight(3).
+		PaddingRight(3).
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderRight(true)
 

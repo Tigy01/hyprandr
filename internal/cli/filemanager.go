@@ -3,13 +3,17 @@ package cli
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/Tigy01/hyprandr/internal/monitors"
 )
 
 var restOfFile []string
+
 // Returns the path of the displays.conf file within the user's filesystem
 func GetConfigPath() (path string, err error) {
 	configDir, err := os.UserConfigDir()
@@ -22,8 +26,7 @@ func GetConfigPath() (path string, err error) {
 // Returns a map of names to monitor structs with a variety of information
 // about them
 func GetCurrentSettings() (map[string]*monitor, error) {
-	currentMonitors := map[string]*monitor{}
-    restOfFile = []string{}
+	restOfFile = []string{}
 
 	avaliableMonitors, err := monitors.GetMonitors()
 	if err != nil {
@@ -44,6 +47,13 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 
 	lines := []string{}
 
+	newMonitors := make([]string, 0)
+	newOffset := "0"
+
+	for name := range avaliableMonitors {
+		newMonitors = append(newMonitors, name)
+	}
+
 	scanner := bufio.NewScanner(displayFile)
 	for scanner.Scan() {
 		line := strings.ReplaceAll(scanner.Text(), " ", "")
@@ -56,13 +66,39 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 		if cutLine, found := strings.CutPrefix(line, "monitor="); found == true {
 			name, monitor := parseMonitorLine(cutLine)
 
-			if avaliableMonitor, ok := avaliableMonitors[name]; ok {
-				currentMonitors[name] = monitor
-				currentMonitors[name].Resolutions = avaliableMonitor.Resolutions
-				currentMonitors[name].Modes = avaliableMonitor.Modes
+			avaliableMonitor, ok := avaliableMonitors[name]
+			if ok {
+				avaliableMonitor.CurrentRes = monitor.CurrentRes
+				avaliableMonitor.Scale = monitor.Scale
+				avaliableMonitor.HOffset = monitor.HOffset
+				avaliableMonitor.VOffset = monitor.VOffset
+				avaliableMonitor.OtherOptions = monitor.OtherOptions
+
+				offset, err := strconv.ParseInt(
+					strings.Split(avaliableMonitor.CurrentRes, "x")[0],
+					10,
+					64,
+				)
+
+				if err != nil {
+					return nil, err
+				}
+
+				scale, err := strconv.ParseFloat(
+					avaliableMonitor.Scale,
+					64,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				newOffset = fmt.Sprintf("%v", math.Round(float64(offset)/scale))
+
+				if newIndex := slices.Index(newMonitors, name); newIndex > -1 {
+					newMonitors = slices.Delete(newMonitors, newIndex, newIndex+1)
+				}
 				continue
 			}
-
 			if _, found := strings.CutSuffix(line, "#Invalid"); !found {
 				line += " #Invalid"
 			}
@@ -70,7 +106,39 @@ func GetCurrentSettings() (map[string]*monitor, error) {
 		restOfFile = append(restOfFile, line)
 	}
 
-	return currentMonitors, nil
+	for _, name := range newMonitors {
+		avaliableMonitor := avaliableMonitors[name]
+
+		avaliableMonitor.CurrentRes = avaliableMonitor.Resolutions[0]
+		avaliableMonitor.CurrentRes = fmt.Sprintf(
+			"%v@%v",
+			avaliableMonitor.CurrentRes,
+			avaliableMonitor.Modes[avaliableMonitor.CurrentRes][0],
+		)
+
+		avaliableMonitor.HOffset = newOffset
+		avaliableMonitor.VOffset = "0"
+
+		avaliableMonitor.Scale = "1"
+		avaliableMonitor.OtherOptions = ""
+
+		currentOffset, err := strconv.ParseInt(newOffset, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		addition, err := strconv.ParseInt(
+			strings.Split(avaliableMonitor.CurrentRes,
+				"x",
+			)[0], 10, 64,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		newOffset = fmt.Sprintf("%v", currentOffset+addition)
+	}
+
+	return avaliableMonitors, nil
 }
 
 func RewriteConfig(currentMonitors map[string]*monitor) error {
