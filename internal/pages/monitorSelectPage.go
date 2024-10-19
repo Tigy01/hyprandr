@@ -17,6 +17,7 @@ type MonitorSelectPage struct {
 	monitors      map[string]*monitor
 	monitorNames  []string
 	previousInput string
+	numDisabled   int
 }
 
 var windowWidth int
@@ -30,28 +31,33 @@ func getHelp() string {
 			Render(" HELP "+lipgloss.NormalBorder().Right),
 		lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder(), true, true, true, false).
-			Render(" h -> Left | j -> Down | k -> Up | l -> Right | RETURN -> Select | q -> Back | r -> Refresh "),
+			Render(" h -> Left | j -> Down | k -> Up | l -> Right | RETURN -> Select | q -> Back | r -> Refresh | d -> Disable"),
 	)
 }
 
-func (p MonitorSelectPage) New(monitors map[string]*monitor) MonitorSelectPage {
+func (page MonitorSelectPage) New(monitors map[string]*monitor) MonitorSelectPage {
+	numDisabled := 0
 	monitorNames := make([]string, 0)
-	for n := range monitors {
-		monitorNames = append(monitorNames, n)
+	for name, monitor := range monitors {
+		if monitor.Disable {
+			numDisabled += 1
+		}
+		monitorNames = append(monitorNames, name)
 	}
 	slices.Sort(monitorNames)
 	return MonitorSelectPage{
 		cursor:       0,
 		monitors:     monitors,
 		monitorNames: monitorNames,
+		numDisabled:  numDisabled,
 	}
 }
 
-func (m MonitorSelectPage) Init() tea.Cmd {
+func (page MonitorSelectPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (page MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		windowWidth = msg.Width
@@ -59,36 +65,41 @@ func (m MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "k":
-			m.cursor = max(m.cursor-1, 0)
+			page.cursor = max(page.cursor-1, 0)
 		case "j":
-			m.cursor = min(m.cursor+1, len(m.monitorNames)-1)
+			page.cursor = min(page.cursor+1, len(page.monitorNames)-1)
 		case "g":
-			if m.previousInput == "g" {
-				m.cursor = 0
+			if page.previousInput == "g" {
+				page.cursor = 0
 			}
 		case "G":
-			m.cursor = len(m.monitorNames) - 1
+			page.cursor = len(page.monitorNames) - 1
 		case "enter":
 			nextPage := ResolutionSelectPage{}.New(
-				m.monitorNames[m.cursor],
-				m.monitors,
+				page.monitorNames[page.cursor],
+				page.monitors,
 			)
 			return nextPage, nil
 		case "ctrl+c", "q":
-			return m, tea.Quit
+			return page, tea.Quit
 		case "r":
 			var err error
-			m.monitors, err = cli.GetCurrentSettings()
+			page.monitors, err = cli.GetCurrentSettings()
 			if err != nil {
 				fmt.Println(err)
 				return nil, tea.Quit
 			}
-            cli.RewriteConfig(m.monitors)
-			return MonitorSelectPage{}.New(m.monitors), nil
+			cli.RewriteConfig(page.monitors)
+			return MonitorSelectPage{}.New(page.monitors), nil
+		case "d":
+			currentMonitor := page.monitors[page.monitorNames[page.cursor]]
+			currentMonitor.Disable = !currentMonitor.Disable
+			cli.RewriteConfig(page.monitors)
+			return MonitorSelectPage{}.New(page.monitors), nil
 		}
-		m.previousInput = msg.String()
+		page.previousInput = msg.String()
 	}
-	return m, nil
+	return page, nil
 }
 
 func padRight(input string, lineLength int, fill string) string {
@@ -105,12 +116,12 @@ func truncate(input string, lineLength int) string {
 	return input
 }
 
-func (m MonitorSelectPage) View() string {
+func (page MonitorSelectPage) View() string {
 	var names string
 	var resolutions string
-	for i, name := range m.monitorNames {
+	for i, name := range page.monitorNames {
 		var line string
-		if i == m.cursor {
+		if i == page.cursor {
 			line += ">[" + name + "]"
 		} else {
 			line += "  " + name + " "
@@ -118,7 +129,11 @@ func (m MonitorSelectPage) View() string {
 		line = padRight(line, 12, " ")
 		line = truncate(line, 12)
 		names += line + "\n"
-		resolutions += m.monitors[name].CurrentRes + "\n"
+		resolutions += page.monitors[name].CurrentRes
+		if page.monitors[name].Disable {
+			resolutions += " #Disabled"
+		}
+		resolutions += "\n"
 	}
 	names = lipgloss.NewStyle().
 		Border(
@@ -142,7 +157,7 @@ func (m MonitorSelectPage) View() string {
 				resolutions,
 			),
 			lipgloss.PlaceVertical(
-				windowHeight-(len(m.monitorNames)+1),
+				windowHeight-(len(page.monitorNames)+1),
 				lipgloss.Bottom,
 				lipgloss.NewStyle().Render(getHelp()),
 			),

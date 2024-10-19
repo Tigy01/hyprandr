@@ -22,7 +22,7 @@ type ResolutionSelectPage struct {
 	monitors map[string]*monitor
 }
 
-func (p ResolutionSelectPage) New(name string, monitors map[string]*monitor) ResolutionSelectPage {
+func (page ResolutionSelectPage) New(name string, monitors map[string]*monitor) ResolutionSelectPage {
 	resolutions := monitors[name].Resolutions
 	return ResolutionSelectPage{
 		name:        name,
@@ -32,11 +32,11 @@ func (p ResolutionSelectPage) New(name string, monitors map[string]*monitor) Res
 	}
 }
 
-func (m ResolutionSelectPage) Init() tea.Cmd {
+func (page ResolutionSelectPage) Init() tea.Cmd {
 	return nil
 }
 
-func (m ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (page ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		windowWidth = msg.Width
@@ -44,81 +44,81 @@ func (m ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "h":
-			if m.resolution != "" {
-				m.subcursor = max(m.subcursor-1, 0)
+			if page.resolution != "" {
+				page.subcursor = max(page.subcursor-1, 0)
 			}
 		case "j":
-			if m.resolution == "" {
-				m.cursor = min(m.cursor+1, len(m.resolutions)-1)
+			if page.resolution == "" {
+				page.cursor = min(page.cursor+1, len(page.resolutions)-1)
 			}
 		case "k":
-			if m.resolution == "" {
-				m.cursor = max(m.cursor-1, 0)
+			if page.resolution == "" {
+				page.cursor = max(page.cursor-1, 0)
 			}
 		case "l":
-			if m.resolution != "" {
-				m.subcursor = min(
-					m.subcursor+1,
-					len(m.monitor.Modes[m.resolution])-1,
+			if page.resolution != "" {
+				page.subcursor = min(
+					page.subcursor+1,
+					len(page.monitor.Modes[page.resolution])-1,
 				)
 			}
 		case "g":
-			if m.resolution != "" {
+			if page.resolution != "" {
 				break
 			}
-			if m.previousInput == "g" {
-				m.cursor = 0
+			if page.previousInput == "g" {
+				page.cursor = 0
 			}
 		case "G":
-			if m.resolution == "" {
-				m.cursor = len(m.resolutions) - 1
+			if page.resolution == "" {
+				page.cursor = len(page.resolutions) - 1
 			}
 		case "enter":
-			if m.resolution == "" {
-				m.resolution = m.resolutions[m.cursor]
-				m.subcursor = 0
+			if page.resolution == "" {
+				page.resolution = page.resolutions[page.cursor]
+				page.subcursor = 0
 			} else {
-				m.refreshRate = m.monitor.Modes[m.resolution][m.subcursor]
+				page.refreshRate = page.monitor.Modes[page.resolution][page.subcursor]
 				err := cli.SetRes(
-					m.monitors,
-					m.name,
-					fmt.Sprintf("%v@%v", m.resolution, m.refreshRate),
+					page.monitors,
+					page.name,
+					fmt.Sprintf("%v@%v", page.resolution, page.refreshRate),
 				)
 
 				if err != nil {
 					panic(fmt.Sprintf("err: %v\n", err))
 				}
 
-				return m, nil
+				return page, nil
 			}
 		case "q":
-			if m.resolution == "" {
-				return MonitorSelectPage{}.New(m.monitors), nil
+			if page.resolution == "" {
+				return MonitorSelectPage{}.New(page.monitors), nil
 			}
-			m.resolution = ""
+			page.resolution = ""
 		case "ctrl+c":
-			return m, tea.Quit
+			return page, tea.Quit
 		case "r":
 			var err error
-			m.monitors, err = cli.GetCurrentSettings()
+			page.monitors, err = cli.GetCurrentSettings()
 			if err != nil {
 				fmt.Println(err)
 				return nil, tea.Quit
 			}
-			cli.RewriteConfig(m.monitors)
-			return MonitorSelectPage{}.New(m.monitors), nil
+			cli.RewriteConfig(page.monitors)
+			return MonitorSelectPage{}.New(page.monitors), nil
 		}
 
-		m.previousInput = msg.String()
+		page.previousInput = msg.String()
 	}
-	return m, nil
+	return page, nil
 }
 
-func (m ResolutionSelectPage) View() string {
-	output := fmt.Sprintf(" [[%v]]\n\n", m.name)
-	for i, res := range m.resolutions {
+func (page ResolutionSelectPage) View() string {
+	output := fmt.Sprintf(" [[%v]]\n\n", page.name)
+	for i, res := range page.resolutions {
 
-		if i == m.cursor {
+		if i == page.cursor {
 			output += ">["
 			output += fmt.Sprint(res, "]\n")
 		} else {
@@ -129,8 +129,8 @@ func (m ResolutionSelectPage) View() string {
 	}
 
 	var refreshRates string
-	if m.resolution != "" {
-		refreshRates = m.renderRefreshRates()
+	if page.resolution != "" {
+		refreshRates = page.renderRefreshRates()
 	}
 
 	withRightBorder := lipgloss.NewStyle().
@@ -152,7 +152,7 @@ func (m ResolutionSelectPage) View() string {
 				refreshRates,
 			),
 			lipgloss.PlaceVertical(
-				windowHeight-(len(m.resolutions)+3),
+				windowHeight-(len(page.resolutions)+3),
 				lipgloss.Bottom,
 				getHelp(),
 			),
@@ -160,16 +160,16 @@ func (m ResolutionSelectPage) View() string {
 	)
 }
 
-func (m ResolutionSelectPage) renderRefreshRates() string {
+func (page ResolutionSelectPage) renderRefreshRates() string {
 	refreshRates := " Select A Refresh Rate\n" + "\n"
-	for _, res := range m.resolutions {
-		for i, rate := range m.monitor.Modes[res] {
+	for _, res := range page.resolutions {
+		for i, rate := range page.monitor.Modes[res] {
 
-			if res != m.resolution {
+			if res != page.resolution {
 				continue
 			}
 
-			if i == m.subcursor {
+			if i == page.subcursor {
 				refreshRates += fmt.Sprint(" >[", rate, "] ")
 			} else {
 				refreshRates += fmt.Sprint("   ", rate, "  ")

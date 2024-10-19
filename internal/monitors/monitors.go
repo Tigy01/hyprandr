@@ -1,4 +1,4 @@
-package monitors 
+package monitors
 
 import (
 	"math"
@@ -9,6 +9,7 @@ import (
 )
 
 type Monitor struct {
+	Disable      bool
 	Resolutions  []string
 	Modes        map[string][]int //resolution to refresh rates
 	CurrentRes   string
@@ -37,7 +38,7 @@ func GetMonitors() (map[string]*Monitor, error) {
 
 		//arbitrary range meant to eliminate edge cases
 		if monitorIndex > -1 && monitorIndex < 2 {
-			line = line[monitorIndex+8:]
+			line = line[monitorIndex+len("Monitor "):]
 			name := line[:strings.Index(line, " ")]
 			monitors[name] = &Monitor{
 				Modes: make(map[string][]int, 0),
@@ -56,13 +57,24 @@ func GetMonitors() (map[string]*Monitor, error) {
 }
 
 func parseModes(line string, currentMonitor *Monitor) {
+	_, disabledStatus, found := strings.Cut(line, "disabled: ")
+	if found {
+		disabledBool, err := strconv.ParseBool(strings.ReplaceAll(disabledStatus, " ", ""))
+
+		if err != nil {
+			return
+		}
+
+		currentMonitor.Disable = disabledBool
+		return
+	}
 	modeIndex := strings.Index(line, "availableModes: ")
 
 	if modeIndex == -1 {
 		return
 	}
 
-	modeList := strings.Split(line[modeIndex+16:], " ")
+	modeList := strings.Split(line[modeIndex+len("availableModes: "):], " ")
 	for _, element := range modeList {
 		resolution, rate, _ := strings.Cut(element, "@")
 		rate, _ = strings.CutSuffix(rate, "Hz")

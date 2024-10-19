@@ -155,9 +155,14 @@ func RewriteConfig(currentMonitors map[string]*monitor) error {
 	}
 
 	for name, monitor := range currentMonitors {
+		disableString := ""
+		if monitor.Disable {
+			disableString = "disable #"
+		}
 		line := fmt.Sprintf(
-			"monitor=%s, %s, %sx%s, %s, %s\n",
+			"monitor=%s, %s%s, %sx%s, %s, %s\n",
 			name,
+			disableString,
 			monitor.CurrentRes,
 			monitor.HOffset,
 			monitor.VOffset,
@@ -177,6 +182,9 @@ func RewriteConfig(currentMonitors map[string]*monitor) error {
 // Parses a hyprland formatted monitor line
 func parseMonitorLine(line string) (name string, newMonitor *monitor) {
 	name, line, _ = strings.Cut(line, ",")
+	if strings.Contains(line, "disable") {
+		_, line, _ = strings.Cut(line, "#")
+	}
 	resolution, line, _ := strings.Cut(line, ",")
 	hoffset, line, _ := strings.Cut(line, "x")
 	voffset, line, _ := strings.Cut(line, ",")

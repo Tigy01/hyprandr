@@ -1,9 +1,9 @@
-package cli 
+package cli
 
 import (
 	"fmt"
+	"github.com/Tigy01/hyprandr/internal/monitors"
 	"strings"
-    "github.com/Tigy01/hyprandr/internal/monitors"
 )
 
 type monitor = monitors.Monitor
@@ -28,20 +28,8 @@ func CreateDefaultConfig() error {
 	return RewriteConfig(currentMonitors)
 }
 
-func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes string) error {
-	selection, ok := currentMonitors[monitorName]
-	if strings.Index(newRes, "@") == -1 {
-		return fmt.Errorf(
-			"Must include a refresh rate in the form of @[REFRESH RATE]",
-		)
-	}
-
-	if !ok {
-		return fmt.Errorf("Invalid Monitor Name: %v", monitorName)
-	}
-
-	selection.CurrentRes = newRes
-	return RewriteConfig(currentMonitors)
+func disableMonitor() error {
+    return nil
 }
 
 func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) error {
@@ -57,6 +45,22 @@ func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex
 		}
 	}
 
+	return RewriteConfig(currentMonitors)
+}
+
+func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes string) error {
+	selection, ok := currentMonitors[monitorName]
+	if strings.Index(newRes, "@") == -1 {
+		return fmt.Errorf(
+			"Must include a refresh rate in the form of @[REFRESH RATE]",
+		)
+	}
+
+	if !ok {
+		return fmt.Errorf("Invalid Monitor Name: %v", monitorName)
+	}
+
+	selection.CurrentRes = newRes
 	return RewriteConfig(currentMonitors)
 }
 
