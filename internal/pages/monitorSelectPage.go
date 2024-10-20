@@ -92,9 +92,7 @@ func (page MonitorSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cli.RewriteConfig(page.monitors)
 			return MonitorSelectPage{}.New(page.monitors), nil
 		case "d":
-			currentMonitor := page.monitors[page.monitorNames[page.cursor]]
-			currentMonitor.Disable = !currentMonitor.Disable
-			cli.RewriteConfig(page.monitors)
+			cli.ToggleMonitor(page.monitors, page.monitorNames[page.cursor])
 			return MonitorSelectPage{}.New(page.monitors), nil
 		}
 		page.previousInput = msg.String()

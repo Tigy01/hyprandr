@@ -28,8 +28,10 @@ func CreateDefaultConfig() error {
 	return RewriteConfig(currentMonitors)
 }
 
-func disableMonitor() error {
-    return nil
+func ToggleMonitor(currentMonitors map[string]*monitor, monitorName string) error {
+	monitor := currentMonitors[monitorName]
+	monitor.Disable = !monitor.Disable
+	return RewriteConfig(currentMonitors)
 }
 
 func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) error {
