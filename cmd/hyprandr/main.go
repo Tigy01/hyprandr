@@ -7,6 +7,7 @@ import (
 
 	"github.com/Tigy01/hyprandr/internal/cli"
 	"github.com/Tigy01/hyprandr/internal/monitors"
+	myerrors "github.com/Tigy01/hyprandr/internal/myErrors"
 	"github.com/Tigy01/hyprandr/internal/pages"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -16,17 +17,13 @@ var windowHeight int
 var currentMonitors map[string]*monitors.Monitor
 
 func main() {
-	currentMonitors, err := cli.GetCurrentSettings()
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-		return
-	}
+	currentMonitors = myerrors.TryWithValue(cli.GetCurrentSettings())
 
 	var selection int
 	var monitorName, customRes string
 	var toggle bool
 	if parseFlags(&selection, &monitorName, &customRes, &toggle) {
-        cli.Run(currentMonitors, selection, monitorName, customRes, toggle)
+		cli.Run(currentMonitors, selection, monitorName, customRes, toggle)
 		return
 	}
 
