@@ -96,5 +96,4 @@ func main() {
 	}
 
 	fmt.Println("\nmust add an additional arg")
-	return
 }
