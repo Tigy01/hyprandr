@@ -86,15 +86,6 @@ func ChangeRes(currentMonitors monitorMap, monitorName string, resIndex int) err
 	return RewriteConfig(currentMonitors)
 }
 
-func getRefreshRateIndex(selection monitor, res string, refresh int) int {
-	for i, rate := range selection.Modes[res] {
-		if rate == refresh {
-			return i
-		}
-	}
-	return -1
-}
-
 func SetRefresh(currentMonitors monitorMap, monitorName string, refresh int) error {
 	selection, ok := currentMonitors[monitorName]
 
@@ -150,4 +141,13 @@ func PrintResolutions(currentMonitors monitorMap) {
 		}
 		fmt.Println("")
 	}
+}
+
+func getRefreshRateIndex(selection monitor, res string, refresh int) int {
+	for i, rate := range selection.Modes[res] {
+		if rate == refresh {
+			return i
+		}
+	}
+	return -1
 }
