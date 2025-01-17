@@ -5,13 +5,13 @@ import (
 	"strings"
 
 	"github.com/Tigy01/hyprandr/internal/monitors"
-	"github.com/Tigy01/hyprandr/internal/myErrors"
+	myerrors "github.com/Tigy01/hyprandr/internal/myErrors"
 )
 
 type monitor = monitors.Monitor
 type monitorMap = map[string]*monitor
 
-func Run(currentMonitors monitorMap, selection int, monitorName, customRes string, toggle bool) {
+func Run(currentMonitors monitorMap, resolution, refreshRate int, monitorName, customRes string, toggle bool) {
 	if _, found := currentMonitors[monitorName]; !found {
 		err := fmt.Sprintln("Must provide monitor name")
 		for k := range currentMonitors {
@@ -21,8 +21,13 @@ func Run(currentMonitors monitorMap, selection int, monitorName, customRes strin
 		return
 	}
 
-	if selection != -1 {
-		myerrors.Try(ChangeRes(currentMonitors, monitorName, selection))
+	if resolution != -1 {
+		myerrors.Try(ChangeRes(currentMonitors, monitorName, resolution))
+		return
+	}
+
+	if refreshRate != -1 {
+		myerrors.Try(SetRefresh(currentMonitors, monitorName, refreshRate))
 		return
 	}
 
@@ -59,13 +64,13 @@ func CreateDefaultConfig() error {
 	return RewriteConfig(currentMonitors)
 }
 
-func ToggleMonitor(currentMonitors map[string]*monitor, monitorName string) error {
+func ToggleMonitor(currentMonitors monitorMap, monitorName string) error {
 	monitor := currentMonitors[monitorName]
 	monitor.Disable = !monitor.Disable
 	return RewriteConfig(currentMonitors)
 }
 
-func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex int) error {
+func ChangeRes(currentMonitors monitorMap, monitorName string, resIndex int) error {
 	selection, ok := currentMonitors[monitorName]
 
 	if !ok {
@@ -81,7 +86,36 @@ func ChangeRes(currentMonitors map[string]*monitor, monitorName string, resIndex
 	return RewriteConfig(currentMonitors)
 }
 
-func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes string) error {
+func getRefreshRateIndex(selection monitor, res string, refresh int) int {
+	for i, rate := range selection.Modes[res] {
+		if rate == refresh {
+			return i
+		}
+	}
+	return -1
+}
+
+func SetRefresh(currentMonitors monitorMap, monitorName string, refresh int) error {
+	selection, ok := currentMonitors[monitorName]
+
+	if !ok {
+		return fmt.Errorf("Invalid monitor name")
+	}
+
+	res := strings.Split(selection.CurrentRes, "@")[0]
+	fmt.Println(res, refresh)
+
+	refreshIndex := getRefreshRateIndex(*selection, res, refresh)
+	if refreshIndex == -1 {
+		return fmt.Errorf("Invalid Refresh Rate: %v\n\tMust be an integer", refresh)
+	}
+
+	selection.CurrentRes = res + fmt.Sprintf("@%v", selection.Modes[res][refreshIndex])
+
+	return RewriteConfig(currentMonitors)
+}
+
+func SetRes(currentMonitors monitorMap, monitorName string, newRes string) error {
 	selection, ok := currentMonitors[monitorName]
 	if strings.Index(newRes, "@") == -1 {
 		return fmt.Errorf(
@@ -97,7 +131,7 @@ func SetRes(currentMonitors map[string]*monitor, monitorName string, newRes stri
 	return RewriteConfig(currentMonitors)
 }
 
-func PrintCurrentConfig(currentMonitors map[string]*monitor) {
+func PrintCurrentConfig(currentMonitors monitorMap) {
 	for name, monitor := range currentMonitors {
 		hOffset := monitor.HOffset
 		vOffset := monitor.VOffset
@@ -107,11 +141,12 @@ func PrintCurrentConfig(currentMonitors map[string]*monitor) {
 	}
 }
 
-func PrintResolutions(currentMonitors map[string]*monitor) {
+func PrintResolutions(currentMonitors monitorMap) {
 	for name, monitor := range currentMonitors {
 		fmt.Println(name)
 		for i, res := range monitor.Resolutions {
 			fmt.Println(fmt.Sprintf("%v: %s", i, res))
+			fmt.Printf("\tRefresh Rates: %v\n", monitor.Modes[res])
 		}
 		fmt.Println("")
 	}

@@ -19,11 +19,11 @@ var currentMonitors map[string]*monitors.Monitor
 func main() {
 	currentMonitors = myerrors.TryWithValue(cli.GetCurrentSettings())
 
-	var selection int
+	var selection, refreshRate int
 	var monitorName, customRes string
 	var toggle bool
-	if parseFlags(&selection, &monitorName, &customRes, &toggle) {
-		cli.Run(currentMonitors, selection, monitorName, customRes, toggle)
+	if parseFlags(&selection, &refreshRate, &monitorName, &customRes, &toggle) {
+		cli.Run(currentMonitors, selection, refreshRate, monitorName, customRes, toggle)
 		return
 	}
 
@@ -42,12 +42,13 @@ func main() {
 
 }
 
-// Returns True if the program is running in cmdMode
-func parseFlags(selection *int, monitorName, customRes *string, toggle *bool) (cmdMode bool) {
-	flag.BoolFunc("cmd", "used to enter cmd mode", func(s string) error { cmdMode = true; return nil })
+// Returns True if the program is running in cliMode
+func parseFlags(selection, refreshRate *int, monitorName, customRes *string, toggle *bool) (cliMode bool) {
+	flag.BoolFunc("cli", "used to enter cli mode", func(s string) error { cliMode = true; return nil })
 	flag.IntVar(selection, "change-res", -1, "select the cooresponding resolution")
 	flag.StringVar(monitorName, "monitor", "none", "used to select the monitor to change")
 	flag.StringVar(customRes, "set-res", "none", "used to set the current resolution")
+	flag.IntVar(refreshRate, "change-refresh", -1, "used to set the current refresh rate")
 	flag.BoolFunc("toggle",
 		"used to toggle a monitor from the command line",
 		func(s string) error {
@@ -61,6 +62,7 @@ func parseFlags(selection *int, monitorName, customRes *string, toggle *bool) (c
 		"Used to list all current resolutions",
 		func(s string) error {
 			cli.PrintResolutions(currentMonitors)
+            os.Exit(0)
 			return nil
 		},
 	)
