@@ -7,9 +7,9 @@ import (
 
 	"github.com/Tigy01/hyprandr/internal/cli"
 	"github.com/Tigy01/hyprandr/internal/monitors"
-	myerrors "github.com/Tigy01/hyprandr/internal/myErrors"
+	"github.com/Tigy01/hyprandr/internal/myErrors"
 	"github.com/Tigy01/hyprandr/internal/pages"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbletea"
 )
 
 var windowWidth int
@@ -29,9 +29,10 @@ func main() {
 
 	if len(os.Args[1:]) != 0 {
 		fmt.Printf(
-			"Error: Unrecognised flags\n\tmust use the -cli flag for cli commands: %v\n",
+			"Error: Unrecognised flags\n\tMust use the -cli flag for cli commands: '%v'\n",
 			os.Args[1:],
 		)
+		return
 	}
 
 	tea.NewProgram(
