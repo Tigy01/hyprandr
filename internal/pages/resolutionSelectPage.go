@@ -86,7 +86,8 @@ func (page ResolutionSelectPage) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				)
 
 				if err != nil {
-					panic(fmt.Sprintf("err: %v\n", err))
+					fmt.Println(err)
+					return nil, tea.Quit
 				}
 
 				return page, nil

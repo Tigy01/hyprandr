@@ -2,11 +2,42 @@ package cli
 
 import (
 	"fmt"
-	"github.com/Tigy01/hyprandr/internal/monitors"
 	"strings"
+
+	"github.com/Tigy01/hyprandr/internal/monitors"
+	"github.com/Tigy01/hyprandr/internal/myErrors"
 )
 
 type monitor = monitors.Monitor
+type monitorMap = map[string]*monitor
+
+func Run(currentMonitors monitorMap, selection int, monitorName, customRes string, toggle bool) {
+	if _, found := currentMonitors[monitorName]; !found {
+		err := fmt.Sprintln("Must provide monitor name")
+		for k := range currentMonitors {
+			err += fmt.Sprintln(k)
+		}
+		fmt.Printf("err: %v\n", err)
+		return
+	}
+
+	if selection != -1 {
+		myerrors.Try(ChangeRes(currentMonitors, monitorName, selection))
+		return
+	}
+
+	if customRes != "none" {
+		myerrors.Try(SetRes(currentMonitors, monitorName, customRes))
+		return
+	}
+
+	if toggle {
+		myerrors.Try(ToggleMonitor(currentMonitors, monitorName))
+		return
+	}
+
+	fmt.Println("\nmust add an additional arg")
+}
 
 func CreateDefaultConfig() error {
 	currentMonitors, err := monitors.GetMonitors()
