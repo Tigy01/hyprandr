@@ -94,7 +94,6 @@ func SetRefresh(currentMonitors monitorMap, monitorName string, refresh int) err
 	}
 
 	res := strings.Split(selection.CurrentRes, "@")[0]
-	fmt.Println(res, refresh)
 
 	refreshIndex := getRefreshRateIndex(*selection, res, refresh)
 	if refreshIndex == -1 {
